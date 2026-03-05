@@ -1,0 +1,602 @@
+{
+  "nodes": [
+    {
+      "gen": "gen6.1",
+      "platform": "C2310",
+      "label": "Gen 6.1 Compute FPGA-STP Server 3U (C2310)",
+      "facts": [
+        "Has 3 power supplies",
+        "6 Storm Peak FPGA cards with 4 DIMMs each",
+        "Longs Peak FPGA with integrated Mellanox ConnectX-4 NIC",
+        "PCIe risers with PLX switches for FPGA connectivity"
+      ],
+      "components": [
+        { "id": "cpu", "name": "Intel Xeon 8171M CPUs (2x)", "category": "Compute" },
+        { "id": "host_mem", "name": "Host Memory 12x16GB DDR4 RDIMMs", "category": "Memory" },
+        { "id": "dimm", "name": "DDR4 RDIMM modules", "category": "Memory" },
+        { "id": "stp", "name": "Storm Peak FPGA Cards (6x)", "category": "FPGA" },
+        { "id": "stp_dimm", "name": "FPGA Memory 16GB RDIMM (24x, 4 per Storm Peak)", "category": "FPGA Memory" },
+        { "id": "lp", "name": "Longs Peak FPGA Accelerator (onboard Mellanox ConnectX-4)", "category": "FPGA/NIC" },
+        { "id": "riser_plx", "name": "PCIe Risers with PLX Switches", "category": "PCIe" },
+        { "id": "oculink", "name": "Oculink Cable(s)", "category": "Cabling" },
+        { "id": "dac_cable", "name": "DAC Cable(s)", "category": "Cabling" },
+        { "id": "usb_mgmt", "name": "Internal USB Mgmt Cable(s)", "category": "Cabling" },
+        { "id": "nvme", "name": "M.2 NVMe SSDs (960GB, 3x, PLP)", "category": "Storage" },
+        { "id": "psu1", "name": "PSU 1 (1020W)", "category": "Power" },
+        { "id": "psu2", "name": "PSU 2 (1020W)", "category": "Power" },
+        { "id": "psu3_bbu", "name": "PSU 3 (1020W, BBU backup power)", "category": "Power" },
+        { "id": "motherboard", "name": "Motherboard", "category": "Platform" },
+        { "id": "bios_bmc", "name": "BIOS / BMC Firmware", "category": "Firmware" }
+      ]
+    },
+    {
+      "gen": "gen8.1",
+      "platform": "C2390",
+      "label": "Gen 8.1 Compute FPGA-STP Server 3U (C2390)",
+      "facts": [
+        "2 CPUs: AMD EPYC Milan 7513V, 32 cores, 2.6GHz, 200W",
+        "Host memory: 16x32GB DDR4 RDIMM",
+        "Storage: 960GB M.2 NVMe SSD power-safe (3x)",
+        "Security: TPM 2.0 + Cerberus (onboard)",
+        "Power: 3x 1000W (Non-LES)"
+      ],
+      "components": [
+        { "id": "cpu", "name": "AMD EPYC Milan 7513V CPUs (2x)", "category": "Compute" },
+        { "id": "host_mem", "name": "Host Memory 16x32GB DDR4 RDIMMs", "category": "Memory" },
+        { "id": "dimm", "name": "DDR4 RDIMM modules", "category": "Memory" },
+        { "id": "stp", "name": "Storm Peak FPGA Cards A2020 (6x)", "category": "FPGA" },
+        { "id": "stp_dimm", "name": "FPGA Memory 16GB RDIMM (24x, 4 per Storm Peak)", "category": "FPGA Memory" },
+        { "id": "lp", "name": "Longs Peak FPGA Card A2010 (onboard Mellanox ConnectX-4 LX 50GbE)", "category": "FPGA/NIC" },
+        { "id": "active_riser", "name": "3-Slot Active x32 Riser + PCIe Switch (PEX/PLX domain)", "category": "PCIe" },
+        { "id": "passive_riser", "name": "3-Slot Passive x32 Riser", "category": "PCIe" },
+        { "id": "oculink", "name": "Oculink Cable(s)", "category": "Cabling" },
+        { "id": "dac_cable", "name": "DAC Cable(s)", "category": "Cabling" },
+        { "id": "usb_mgmt", "name": "Internal USB Mgmt Cable(s)", "category": "Cabling" },
+        { "id": "nvme", "name": "M.2 NVMe SSDs (960GB, 3x, power safe)", "category": "Storage" },
+        { "id": "psu", "name": "Power Supplies (1000W, 3x)", "category": "Power" },
+        { "id": "motherboard", "name": "Motherboard", "category": "Platform" },
+        { "id": "bios_bmc", "name": "BIOS / BMC Firmware", "category": "Firmware" },
+        { "id": "tpm", "name": "TPM 2.0 (onboard)", "category": "Security" },
+        { "id": "cerberus", "name": "Cerberus (onboard)", "category": "Security" },
+        { "id": "fans", "name": "Fans 60mmx56mm (8x)", "category": "Cooling" }
+      ]
+    }
+  ],
+  "symptoms": [
+    {
+      "code": "NODE_D_STATE",
+      "title": "Node in D State / Unidentified Issue",
+      "stage": 0,
+      "domainConfidence": "unknown",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": [],
+      "checks": [
+        "Collect BMC event logs and sensor snapshot (ipmitool sel list / ipmitool sensor / BMC UI export). Look for power, thermal, or fatal platform errors.",
+        "Record BIOS/BMC firmware versions (sh system info -i <slot> / ipmiutil fru / SMTK system info). Verify against known-good baseline.",
+        "Collect PCIe device presence summary (lspci / SMTK hardware inventory / BIOS device inventory). Check: NIC present? FPGA cards present? NVMe controllers present?"
+      ],
+      "evidence": [
+        { "description": "BMC event logs and sensor snapshot", "minStage": 0 },
+        { "description": "BIOS/BMC firmware versions", "minStage": 0 },
+        { "description": "PCIe device presence summary (NIC / FPGA / NVMe present or missing)", "minStage": 0 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "BLADE_IS_NOT_VISIBLE",
+      "title": "Blade Is Not Visible in Rack Manager",
+      "stage": 0,
+      "domainConfidence": "unknown",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["usb_mgmt", "psu1", "psu2", "psu3_bbu", "psu"],
+      "checks": [
+        "Verify blade appears in Rack Manager (RM) UI or CLI",
+        "Check management cable connection between blade and RM (reseat if needed)",
+        "Verify RM port assignment is correct for this blade slot",
+        "Check PSU status LEDs � verify all PSUs are powered and healthy",
+        "Verify PDB/PMDU power delivery path to this slot",
+        "If blade appears after above checks, pivot to NODE_D_STATE for further triage"
+      ],
+      "evidence": [
+        { "description": "Rack Manager blade inventory screenshot", "minStage": 0 },
+        { "description": "PSU LED status (photo or description)", "minStage": 0 },
+        { "description": "Management cable connection status", "minStage": 0 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "BMC_UNRESPONSIVE",
+      "title": "BMC Unresponsive / Cannot Connect to BMC",
+      "stage": 0,
+      "domainConfidence": "unknown",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["motherboard", "bios_bmc", "usb_mgmt"],
+      "checks": [
+        "Verify BMC network connectivity (ping BMC IP)",
+        "Check management cable connection and port assignment",
+        "Try BMC reset via hardware button or RM command",
+        "Collect BMC event logs and sensor snapshot if accessible (ipmitool sel list / ipmitool sensor)",
+        "Record BIOS/BMC firmware versions if accessible",
+        "Collect PCIe device presence summary if OS is accessible"
+      ],
+      "evidence": [
+        { "description": "BMC ping / connectivity test results", "minStage": 0 },
+        { "description": "Management cable and port status", "minStage": 0 },
+        { "description": "BMC event logs if obtainable", "minStage": 0 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "POWER_P1",
+      "title": "Power Issue / PSU / PDU / CMOS",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["psu1", "psu2", "psu3_bbu", "psu"],
+      "checks": [
+        "Check all PSU status LEDs and BMC power sensor readings",
+        "Verify PSU PMBus cable routing (confirm PSU1/2/3 cables not inverted)",
+        "Check PDU/PMDU breaker status for this slot",
+        "Verify CMOS battery voltage if BIOS settings reset unexpectedly",
+        "Reseat suspect PSU and verify BMC logs the event",
+        "Try known-good PSU if available",
+        "Check for correlated thermal events in BMC logs"
+      ],
+      "evidence": [
+        { "description": "BMC power sensor readings", "minStage": 1 },
+        { "description": "PSU LED status (photo or description)", "minStage": 1 },
+        { "description": "PDU/PMDU breaker status", "minStage": 1 },
+        { "description": "BMC event logs (power events)", "minStage": 1 },
+        { "description": "Photos of PSU LEDs and PMBus cable routing", "minStage": 2 },
+        { "description": "List of parts swapped and results", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "MOTHERBOARD",
+      "title": "Motherboard / Board Replacement",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["motherboard", "bios_bmc"],
+      "checks": [
+        "Confirm motherboard replacement is warranted (min boot config tried, other components ruled out)",
+        "Record current BIOS/BMC firmware versions before replacement",
+        "Document all current BIOS settings (boot order, PCIe config)",
+        "After replacement: update BIOS/BMC to fleet-standard firmware",
+        "After replacement: reconfigure BIOS settings (boot order, PCIe)",
+        "After replacement: verify TPM/Cerberus re-enrollment if applicable",
+        "After replacement: run full validation (PXE, FPGA enum, NVMe, stress test)"
+      ],
+      "evidence": [
+        { "description": "Pre-replacement BIOS/BMC firmware versions", "minStage": 1 },
+        { "description": "Pre-replacement BIOS settings backup", "minStage": 1 },
+        { "description": "Post-replacement validation results", "minStage": 2 },
+        { "description": "Post-replacement firmware versions", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "BIOS_BMC",
+      "title": "BIOS / BMC Firmware Issue",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["bios_bmc", "motherboard"],
+      "checks": [
+        "Record current BIOS and BMC firmware versions",
+        "Compare against fleet-standard / known-good firmware baseline",
+        "Check for known firmware bugs matching observed symptoms",
+        "Plan firmware update if mismatch found",
+        "After update: verify BIOS settings did not reset to defaults",
+        "After update: verify boot order and PCIe configuration"
+      ],
+      "evidence": [
+        { "description": "Current BIOS version", "minStage": 1 },
+        { "description": "Current BMC version", "minStage": 1 },
+        { "description": "Fleet-standard firmware baseline for comparison", "minStage": 1 },
+        { "description": "Post-update validation results", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "FPGA_MISSING_MULTIPLE",
+      "title": "Multiple Storm Peak FPGAs Missing / Not Detected",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["stp", "riser_plx", "active_riser", "passive_riser", "psu", "psu1", "psu2", "psu3_bbu"],
+      "checks": [
+        "Check shared-domain issues FIRST: riser/PLX/switch/power/active riser before swapping individual FPGA cards",
+        "Verify all power supplies are healthy and providing adequate power",
+        "Inspect PCIe riser seating and PLX switch status LEDs",
+        "Check for common power rail issues affecting multiple slots",
+        "Verify active riser PCIe switch initialization in BIOS/POST",
+        "Reseat risers before reseating individual FPGA cards",
+        "Verify PSU PMBus cable routing (confirm PSU1/2/3 cables not inverted)",
+        "Check FPGA slot power indicators",
+        "Reseat Oculink cable(s) - verify not pinched or damaged",
+        "Try known-good FPGA if available (late-stage)"
+      ],
+      "evidence": [
+        { "description": "FPGA diagnostic output (run diag fpga)", "minStage": 1 },
+        { "description": "lspci output showing PCIe topology", "minStage": 1 },
+        { "description": "Power supply status from BMC/IPMI", "minStage": 1 },
+        { "description": "BIOS POST codes and error messages", "minStage": 1 },
+        { "description": "Event logs from BMC", "minStage": 1 },
+        { "description": "Photos of riser LED status indicators", "minStage": 2 },
+        { "description": "Photos of PSU LEDs and PMBus cable routing", "minStage": 2 },
+        { "description": "List of parts swapped and results of each swap", "minStage": 2 }
+      ],
+      "runbookIds": ["diag_fpga"]
+    },
+    {
+      "code": "RISER_CARD",
+      "title": "PCIe Riser Card Issue",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["riser_plx", "active_riser", "passive_riser"],
+      "checks": [
+        "Inspect riser card seating in motherboard slot",
+        "Check PLX switch status LEDs on active riser",
+        "Verify all devices on this riser are missing (shared-domain pattern)",
+        "Reseat the riser card",
+        "Check for bent pins or physical damage on riser connector",
+        "Try the suspect FPGA card in a different riser slot (if available)",
+        "Try known-good riser if available"
+      ],
+      "evidence": [
+        { "description": "lspci output showing PCIe topology", "minStage": 1 },
+        { "description": "BIOS POST codes and error messages", "minStage": 1 },
+        { "description": "Photos of riser LED status indicators", "minStage": 2 },
+        { "description": "List of parts swapped and results", "minStage": 2 }
+      ],
+      "runbookIds": ["diag_fpga"]
+    },
+    {
+      "code": "OCULINK",
+      "title": "Oculink Cable Issue",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["oculink", "lp"],
+      "checks": [
+        "Inspect Oculink cable for physical damage or pinching",
+        "Verify both ends of the Oculink cable are fully seated",
+        "Check cable routing path � ensure no sharp bends or pinch points",
+        "Reseat the Oculink cable at both ends",
+        "Try known-good Oculink cable if available",
+        "Verify Longs Peak FPGA LEDs after cable reseat"
+      ],
+      "evidence": [
+        { "description": "Oculink cable condition (photo or description)", "minStage": 1 },
+        { "description": "Longs Peak FPGA LED status after reseat", "minStage": 1 },
+        { "description": "lspci output before and after cable reseat", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "PXE_TIMEOUT",
+      "title": "PXE Boot Timeout / Network Boot Failure",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["lp", "oculink", "dac_cable", "riser_plx", "active_riser"],
+      "checks": [
+        "Verify Longs Peak FPGA LEDs / health status",
+        "Verify Oculink cable seated and not pinched",
+        "Validate Mellanox NIC config/firmware and PXE enabled",
+        "Collect serial console logs during PXE attempt",
+        "Check BIOS boot order includes PXE",
+        "Verify network switch port configuration",
+        "Check ToR switch port assignment matches expected blade port (DHCP lease state)",
+        "Verify DAC cable integrity and seating",
+        "Try known-good NIC if available",
+        "Attempt minimum boot config to isolate (late-stage)"
+      ],
+      "evidence": [
+        { "description": "Serial console output during boot", "minStage": 1 },
+        { "description": "BIOS screenshots showing boot order", "minStage": 1 },
+        { "description": "Mellanox NIC firmware version", "minStage": 1 },
+        { "description": "Switch port status and VLAN config", "minStage": 1 },
+        { "description": "ipconfig /all output from recovery shell", "minStage": 1 },
+        { "description": "ToR switch port config and DHCP lease state", "minStage": 1 },
+        { "description": "Photos of PSU LEDs and cabling", "minStage": 2 },
+        { "description": "Min boot config results", "minStage": 2 }
+      ],
+      "runbookIds": ["diag_fpga"]
+    },
+    {
+      "code": "NIC_DOWN",
+      "title": "Network Interface Down / Link Failure",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["lp", "oculink", "dac_cable"],
+      "checks": [
+        "Check Longs Peak FPGA status and link LEDs",
+        "Verify Oculink cable integrity and seating",
+        "Verify DAC cable integrity and seating",
+        "Check switch port status and error counters",
+        "Verify NIC driver loaded correctly",
+        "Check for firmware mismatch",
+        "Try known-good NIC if available (late-stage)"
+      ],
+      "evidence": [
+        { "description": "ipconfig /all or ifconfig output", "minStage": 1 },
+        { "description": "NIC driver version and status", "minStage": 1 },
+        { "description": "Switch port statistics", "minStage": 1 },
+        { "description": "FPGA diagnostic output", "minStage": 1 },
+        { "description": "dmesg or Event Viewer network errors", "minStage": 1 },
+        { "description": "ToR switch port config and DHCP lease state", "minStage": 1 }
+      ],
+      "runbookIds": ["diag_fpga"]
+    },
+    {
+      "code": "DAC_CABLE",
+      "title": "DAC Cable Issue / Miswire / Loose Cable",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["dac_cable", "lp"],
+      "checks": [
+        "Inspect DAC cable for physical damage",
+        "Verify DAC cable is seated at both ends (NIC side and ToR side)",
+        "Verify correct port mapping (blade port to ToR port)",
+        "Check ToR switch port status and error counters for the connected port",
+        "Try known-good DAC cable if available",
+        "After replacement: verify link comes up and PXE/network works"
+      ],
+      "evidence": [
+        { "description": "DAC cable condition (photo or description)", "minStage": 1 },
+        { "description": "ToR switch port status and error counters", "minStage": 1 },
+        { "description": "Port mapping documentation", "minStage": 1 },
+        { "description": "Post-replacement link status", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "NVME_MISSING",
+      "title": "NVMe SSD Not Detected / Missing",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["nvme"],
+      "checks": [
+        "Verify M.2 NVMe SSD seated correctly",
+        "Check BIOS storage controller settings",
+        "Verify NVMe driver loaded",
+        "Check for thermal throttling or power issues",
+        "Inspect M.2 slot for damage"
+      ],
+      "evidence": [
+        { "description": "BIOS storage device list", "minStage": 1 },
+        { "description": "Disk Management or lsblk output", "minStage": 1 },
+        { "description": "NVMe SMART data if accessible", "minStage": 1 },
+        { "description": "BMC sensor readings for storage temps", "minStage": 1 },
+        { "description": "Storage controller event logs", "minStage": 1 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "CPU",
+      "title": "CPU Issue / CPU Replacement",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["cpu"],
+      "checks": [
+        "Check BMC event logs for CPU-related errors (IERR, CATERR, machine check)",
+        "Verify CPU thermal readings are within spec",
+        "Check for BIOS POST errors related to CPU",
+        "If replacing: document current BIOS settings before swap",
+        "After replacement: expect PXE timeout on first boot (memory re-training)",
+        "After replacement: verify BIOS settings did not reset"
+      ],
+      "evidence": [
+        { "description": "BMC event logs (CPU errors)", "minStage": 1 },
+        { "description": "CPU thermal sensor readings", "minStage": 1 },
+        { "description": "BIOS POST error codes", "minStage": 1 },
+        { "description": "Post-replacement validation results", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "DIMM",
+      "title": "Memory DIMM Issue / DIMM Replacement",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": ["dimm", "host_mem"],
+      "checks": [
+        "Check BMC event logs for memory errors (correctable/uncorrectable ECC)",
+        "Verify DIMM population matches expected configuration",
+        "Check BIOS memory map for missing/degraded DIMMs",
+        "Reseat suspect DIMM(s)",
+        "If replacing: match DIMM specs (speed, capacity, rank) to fleet standard",
+        "After replacement: verify full memory capacity in BIOS"
+      ],
+      "evidence": [
+        { "description": "BMC event logs (memory errors)", "minStage": 1 },
+        { "description": "BIOS memory configuration screen", "minStage": 1 },
+        { "description": "DIMM slot population map", "minStage": 1 },
+        { "description": "Post-replacement memory validation", "minStage": 2 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "ASK_MODE_PENDING",
+      "title": "Ask Mode Pending / Approval Required",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": [],
+      "checks": [
+        "Verify the pending ask-mode request in the management system",
+        "Confirm the required approval chain and current status",
+        "Document what action is being requested (part swap, firmware update, etc.)",
+        "Monitor for approval and proceed with the approved action when granted"
+      ],
+      "evidence": [
+        { "description": "Ask-mode request ID and status", "minStage": 1 },
+        { "description": "Requested action description", "minStage": 1 }
+      ],
+      "runbookIds": []
+    },
+    {
+      "code": "SOFTWARE",
+      "title": "Software / OS Issue",
+      "stage": 1,
+      "domainConfidence": "known",
+      "appliesTo": ["gen6.1", "gen8.1"],
+      "componentIds": [],
+      "checks": [
+        "Verify the issue is software-related (not hardware)",
+        "Check OS event logs for errors",
+        "Verify OS version and patch level",
+        "Check for known software issues matching observed symptoms",
+        "Escalate to software team if hardware is confirmed healthy"
+      ],
+      "evidence": [
+        { "description": "OS event logs", "minStage": 1 },
+        { "description": "OS version and patch level", "minStage": 1 },
+        { "description": "Description of software symptoms", "minStage": 1 }
+      ],
+      "runbookIds": []
+    }
+  ],
+  "pivotRules": [
+    { "fromSymptom": "NODE_D_STATE", "finding": "Power / thermal / fatal platform errors in BMC logs", "toSymptom": "POWER_P1" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "Firmware mismatch or corruption detected", "toSymptom": "BIOS_BMC" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "PCIe devices missing (multiple FPGAs not detected)", "toSymptom": "FPGA_MISSING_MULTIPLE" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "NIC not enumerating / network adapter missing", "toSymptom": "NIC_DOWN" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "NVMe SSD(s) missing from PCIe topology", "toSymptom": "NVME_MISSING" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "PXE visible but failing (E16/E18 or timeout)", "toSymptom": "PXE_TIMEOUT" },
+    { "fromSymptom": "NODE_D_STATE", "finding": "All devices present � suspect board or CPU issue", "toSymptom": "MOTHERBOARD" },
+    { "fromSymptom": "BMC_UNRESPONSIVE", "finding": "BMC recovered after reset � node visible but in D state", "toSymptom": "NODE_D_STATE" },
+    { "fromSymptom": "BMC_UNRESPONSIVE", "finding": "BMC unrecoverable � board replacement needed", "toSymptom": "MOTHERBOARD" },
+    { "fromSymptom": "BLADE_IS_NOT_VISIBLE", "finding": "Blade appeared in RM after cabling/power fix � now in D state", "toSymptom": "NODE_D_STATE" },
+    { "fromSymptom": "BLADE_IS_NOT_VISIBLE", "finding": "Power delivery issue confirmed (PSU/PDB/PMDU)", "toSymptom": "POWER_P1" }
+  ],
+  "actions": [
+    {
+      "id": "CPU_REPLACED",
+      "description": "CPU replaced",
+      "expectedSideEffects": [
+        "PXE timeout on first boot is expected (BIOS re-training memory)",
+        "NVMe may not appear until second boot cycle",
+        "BIOS settings may reset to defaults - verify boot order"
+      ]
+    },
+    {
+      "id": "PSU_RESEATED",
+      "description": "PSU reseated or replaced",
+      "expectedSideEffects": [
+        "Node may power cycle during PSU hot-swap",
+        "BMC may log power event - this is expected",
+        "Verify PMBus cable routing is correct after reseat"
+      ]
+    },
+    {
+      "id": "FPGA_RESEATED",
+      "description": "FPGA card reseated or replaced",
+      "expectedSideEffects": [
+        "FPGA may take longer to enumerate on first boot after reseat",
+        "FpgaDiag should be re-run to verify new card health",
+        "If Storm Peak replaced, verify DIMM population (4 per card)"
+      ]
+    },
+    {
+      "id": "RISER_RESEATED",
+      "description": "PCIe riser reseated",
+      "expectedSideEffects": [
+        "All devices on that riser will re-enumerate",
+        "PLX switch may report training errors on first boot - re-check on second boot"
+      ]
+    },
+    {
+      "id": "OCULINK_RESEATED",
+      "description": "Oculink cable reseated or replaced",
+      "expectedSideEffects": [
+        "NIC link may flap briefly during reseat",
+        "Verify cable is not pinched after re-routing"
+      ]
+    },
+    {
+      "id": "NIC_REPLACED",
+      "description": "NIC / Longs Peak card replaced",
+      "expectedSideEffects": [
+        "MAC address changes - DHCP lease may need renewal",
+        "PXE may fail until switch learns new MAC",
+        "Firmware may need update to match fleet standard"
+      ]
+    },
+    {
+      "id": "MIN_BOOT_CONFIG",
+      "description": "Minimum boot config performed (1 CPU, 1 DIMM, no FPGAs)",
+      "expectedSideEffects": [
+        "FPGAs will not be detected (intentionally removed)",
+        "Reduced memory is expected",
+        "This isolates motherboard/CPU - if PXE works here, problem is in removed components"
+      ]
+    },
+    {
+      "id": "BIOS_BMC_UPDATED",
+      "description": "BIOS/BMC firmware updated",
+      "expectedSideEffects": [
+        "Node will reboot during update",
+        "BIOS settings may reset to defaults",
+        "First boot after update may be slower (re-training)"
+      ]
+    },
+    {
+      "id": "MOTHERBOARD_REPLACED",
+      "description": "Motherboard replaced",
+      "expectedSideEffects": [
+        "All onboard devices get new hardware IDs",
+        "BMC/BIOS settings reset to factory defaults",
+        "PXE may fail until BIOS boot order is reconfigured",
+        "DIMM training on first boot - may take longer",
+        "TPM/Cerberus keys change - re-enrollment may be needed"
+      ]
+    },
+    {
+      "id": "DAC_REPLACED",
+      "description": "DAC cable replaced",
+      "expectedSideEffects": [
+        "Link may flap during swap",
+        "Switch port may need to re-negotiate speed/duplex",
+        "If PXE was failing due to bad DAC, it should resolve after replacement"
+      ]
+    },
+    {
+      "id": "DIMM_RESEATED",
+      "description": "DIMM reseated or replaced",
+      "expectedSideEffects": [
+        "Memory re-training on next boot (may take longer)",
+        "Verify full memory capacity in BIOS after boot"
+      ]
+    },
+    {
+      "id": "MGMT_CABLE_RESEATED",
+      "description": "Management cable reseated or replaced",
+      "expectedSideEffects": [
+        "BMC may temporarily lose connectivity during reseat",
+        "Blade should appear in Rack Manager after reconnection"
+      ]
+    }
+  ],
+  "runbooks": [
+    {
+      "id": "diag_fpga",
+      "title": "FPGA Diagnostic Runbook",
+      "steps": [
+        "Path: D:\\app{NMAgent}\\SdnApplianceDebugger",
+        "Run: .\\FpgaDiag.ps1",
+        "Output file: D:\\data\\Debug\\fpga{nodeName}_{timeStamp}.txt",
+        "Note: output file is available through XTS without JIT permissions"
+      ]
+    }
+  ]
+}
