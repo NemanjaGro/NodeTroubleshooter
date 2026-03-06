@@ -1,7 +1,5 @@
 using NodeTroubleshooter.Model;
 
-using NodeTroubleshooter.Model;
-
 namespace NodeTroubleshooter.Core;
 
 public class Commands
@@ -56,10 +54,10 @@ public class Commands
     public void RunWizard()
     {
         Console.WriteLine();
-        Console.WriteLine("+---------------------------------------------------------------+");
+        Console.WriteLine("+-----------------------------------------------------------------+");
         Console.WriteLine("|   NodeTroubleshooter - Node Recovery Wizard (FPGA-STP Platform) |");
         Console.WriteLine("|   Tracks and guides node-level hardware investigations          |");
-        Console.WriteLine("+---------------------------------------------------------------+");
+        Console.WriteLine("+-----------------------------------------------------------------+");
         Console.WriteLine();
 
         Console.Write("Enter node name: ");

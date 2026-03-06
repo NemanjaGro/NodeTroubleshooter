@@ -1,5 +1,3 @@
-using NodeTroubleshooter.Model;
-
 using System.Text.Json;
 using NodeTroubleshooter.Model;
 

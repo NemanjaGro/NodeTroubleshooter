@@ -1,0 +1,781 @@
+<Window x:Class="NodeTroubleshooter.Gui.MainWindow"
+xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="clr-namespace:NodeTroubleshooter.Gui.ViewModels"
+    xmlns:conv="clr-namespace:NodeTroubleshooter.Gui.Converters"
+    Title="{Binding WindowTitle}"
+    Icon="/Assets/justlogo.ico"
+    Height="820" Width="1200" MinWidth="900" MinHeight="650"
+    WindowStartupLocation="CenterScreen"
+        Background="#f5f7fa"> <!-- Main window / page background color (Fluent light gray) - visible behind all panels -->
+
+<Window.DataContext>
+    <vm:MainViewModel />
+</Window.DataContext>
+
+<Window.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolVis" />
+        <conv:SymptomDisplayConverter x:Key="SymptomDisp" />
+        <conv:ActionDisplayConverter x:Key="ActionDisp" />
+        <conv:NodeDisplayConverter x:Key="NodeDisp" />
+        <conv:InverseLengthToVisibilityConverter x:Key="InverseLengthVis" />
+
+    <!-- ══════════ COLOR PALETTE ══════════
+         Change these brushes to re-theme the entire app.
+         Every control references these keys, so one change here propagates everywhere. -->
+
+    <!-- Page-level background (Fluent light gray) -->
+    <SolidColorBrush x:Key="PageBg" Color="#f5f7fa" />
+    <!-- Top bar background (dark blue header strip) -->
+    <SolidColorBrush x:Key="PanelBg" Color="#1b3a5c" />
+    <!-- Card/section background (Checks, Evidence, Runbook, Components, Record Action, Journal cards) -->
+    <SolidColorBrush x:Key="CardBg" Color="#ffffff" />
+    <!-- Primary accent: section header titles, Save button bg, Start Session button bg -->
+    <SolidColorBrush x:Key="AccentBlue" Color="#2563EB" />
+    <!-- Green accent: session info text in top bar, Journal "Add" button bg -->
+    <SolidColorBrush x:Key="AccentGreen" Color="#2e7d32" />
+    <!-- Orange accent: suspect component names, Record Action button bg -->
+    <SolidColorBrush x:Key="AccentOrange" Color="#e67e22" />
+    <!-- Red accent (available for alerts/errors) -->
+    <SolidColorBrush x:Key="AccentRed" Color="#e53935" />
+    <!-- Primary text: all main readable text (check descriptions, evidence text, runbook steps, journal entries) -->
+    <SolidColorBrush x:Key="TextPrimary" Color="#1F2937" />
+    <!-- Secondary/dimmed text: form labels ("Node Name", "Symptom"), subtitle in top bar, locked evidence text -->
+    <SolidColorBrush x:Key="TextSecondary" Color="#6B7280" />
+    <!-- Hint/placeholder text color for watermark overlays -->
+    <SolidColorBrush x:Key="TextHint" Color="#9CA3AF" />
+    <!-- Border color: text box & combo box borders, card edges -->
+    <SolidColorBrush x:Key="BorderBrush" Color="#D1D5DB" />
+    <!-- Status bar background (light gray strip at bottom) -->
+    <SolidColorBrush x:Key="StatusBarBg" Color="#f5f7fa" />
+
+    <!-- ══════════ NAMED TEXT STYLES ══════════ -->
+
+    <!-- H1: main page headline ("Start a New Investigation") - 22px, SemiBold, AccentBlue -->
+    <Style x:Key="H1" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBlue}" />
+        <Setter Property="Margin" Value="0,0,0,18" />
+    </Style>
+
+    <!-- LabelText: form field labels ("Node Name", "Node Generation", "Symptom") - 12px, SemiBold, TextSecondary -->
+    <Style x:Key="LabelText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="Margin" Value="0,0,0,6" />
+    </Style>
+
+    <!-- HintText: watermark/placeholder text shown inside empty inputs - 13px, Normal, TextHint -->
+    <Style x:Key="HintText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{StaticResource TextHint}" />
+        <Setter Property="IsHitTestVisible" Value="False" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="10,0,0,0" />
+    </Style>
+
+    <!-- SectionHeader: blue title text above each card in session view
+         ("CHECKS", "EVIDENCE TO COLLECT", "RUNBOOK", "SUSPECT COMPONENTS",
+          "RECORD ACTION", "JOURNAL") -->
+    <Style x:Key="SectionHeader" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBlue}" />
+        <Setter Property="Margin" Value="0,0,0,8" />
+    </Style>
+
+    <!-- ══════════ BUTTON STYLES ══════════ -->
+
+    <!-- ActionBtn: base action button style - "Save" (top bar), fallback for other actions.
+         Some buttons override Background locally (Record Action -> AccentOrange, Add journal -> AccentGreen). -->
+    <Style x:Key="ActionBtn" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource AccentBlue}" />
+        <Setter Property="Foreground" Value="#ffffff" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- PrimaryButton: prominent call-to-action ("Start Session") - height 44, corner radius 8, bold, blue bg, white text -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Background" Value="{StaticResource AccentBlue}" />
+        <Setter Property="Foreground" Value="#ffffff" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="Height" Value="44" />
+        <Setter Property="Padding" Value="0,0" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            CornerRadius="8" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- SecondaryBtn: "Export Log" and "Close Session" (top bar) - white bg with accent border -->
+    <Style x:Key="SecondaryBtn" TargetType="Button">
+        <Setter Property="Background" Value="#ffffff" />
+        <Setter Property="Foreground" Value="{StaticResource AccentBlue}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="14,7" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource AccentBlue}" BorderThickness="1"
+                            CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ChipButton: rounded chip for recent sessions - light bg, subtle border, hover changes border to accent -->
+    <Style x:Key="ChipButton" TargetType="Button">
+        <Setter Property="Background" Value="#f5f5f5" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="Padding" Value="10,8" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="ChipBorder" Background="{TemplateBinding Background}"
+                            BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                            CornerRadius="6" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ChipBorder" Property="BorderBrush" Value="{StaticResource AccentBlue}" />
+                            <Setter TargetName="ChipBorder" Property="Background" Value="#eaf1fb" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.4" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ══════════ INPUT STYLES ══════════ -->
+
+    <!-- Text input style: applies to ALL text boxes in the app:
+         - Setup panel: "Node Name" input field
+         - Session panel: notes field under each check item, notes field under each evidence item
+         - Journal panel: the text input where you type a new journal entry -->
+    <Style x:Key="DarkTextBox" TargetType="TextBox">
+        <Setter Property="Background" Value="#ffffff" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="CaretBrush" Value="{StaticResource TextPrimary}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <!-- Dropdown/combo box style: applies to ALL combo boxes:
+         - Setup panel: "Node Generation" dropdown (Gen6, Gen8, etc.), "Symptom" dropdown
+         - Session panel: "Record Action" dropdown (action picker) -->
+    <Style x:Key="DarkCombo" TargetType="ComboBox">
+        <Setter Property="Background" Value="#ffffff" />
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="FontSize" Value="13" />
+    </Style>
+
+    <!-- Checkbox style: the tick boxes next to each check item and each evidence item in session view -->
+    <Style x:Key="DarkCheck" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FontSize" Value="12" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- Ellipsis/more button style for the "..." button in top bar -->
+    <Style x:Key="EllipsisBtn" TargetType="Button">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="#ffffff" />
+        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="Padding" Value="8,4" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="#ffffff" BorderThickness="1"
+                            CornerRadius="4" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════ TOP BAR ═══════════
+             Animated gradient header strip across the top of the window.
+             Contains: app icon + title (left), session info text (center), Save / Export Log / ... buttons (right). -->
+        <Grid Grid.Row="0" Height="52">
+            <Grid.Background>
+                <LinearGradientBrush x:Name="HeaderBrush" StartPoint="0,0" EndPoint="1,0">
+                    <GradientStop x:Name="GS1" Color="#FF1446A0" Offset="0"/>
+                    <GradientStop x:Name="GS2" Color="#FF3B82F6" Offset="0.5"/>
+                    <GradientStop x:Name="GS3" Color="#FFD4E4FF" Offset="1"/>
+                </LinearGradientBrush>
+            </Grid.Background>
+            <Grid.Triggers>
+                <EventTrigger RoutedEvent="Grid.Loaded">
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                            <ColorAnimation Storyboard.TargetName="GS2"
+                                            Storyboard.TargetProperty="Color"
+                                            To="#FF60A5FA"
+                                            Duration="0:0:6" />
+                            <ColorAnimation Storyboard.TargetName="GS3"
+                                            Storyboard.TargetProperty="Color"
+                                            To="#FFF0F6FF"
+                                            Duration="0:0:6" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Grid.Triggers>
+
+            <Grid Margin="12,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- App icon + title (left side of top bar) -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Microsoft logo (colored squares) -->
+                    <Grid Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Grid.Row="0" Grid.Column="0" Fill="#f25022" Margin="0,0,1,1" />
+                        <Rectangle Grid.Row="0" Grid.Column="1" Fill="#7fba00" Margin="1,0,0,1" />
+                        <Rectangle Grid.Row="1" Grid.Column="0" Fill="#00a4ef" Margin="0,1,1,0" />
+                        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#ffb900" Margin="1,1,0,0" />
+                    </Grid>
+                    <!-- Bold app name → white text on dark bg -->
+                    <TextBlock Text="NodeTroubleshooter" FontSize="15" FontWeight="Bold" Foreground="#ffffff" VerticalAlignment="Center" />
+                    <!-- Subtitle next to app name → lighter white (dimmed) -->
+                    <TextBlock Text="  Node Recovery Wizard" FontSize="12" Foreground="#b0c4de" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Session info text (centered in top bar, light green) - shows current session summary, only visible during active session -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Visibility="{Binding HasActiveSession, Converter={StaticResource BoolVis}}">
+                    <!-- Back button: returns to setup panel, saves session, keeps form pre-filled -->
+                    <Button Command="{Binding GoBackCommand}" Style="{StaticResource EllipsisBtn}"
+                            Padding="6,3" Margin="0,0,10,0" ToolTip="Back to setup (keeps your selections)">
+                        <TextBlock Text="&#x2190; Back" FontSize="12" FontWeight="Normal" Foreground="#ffffff" />
+                    </Button>
+                    <TextBlock Text="{Binding SessionInfo}" FontSize="12" Foreground="#0a1e3d" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Top-right buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <!-- Save button: solid accent blue bg, white text -->
+                    <Button Content="Save" Command="{Binding SaveSessionCommand}" Style="{StaticResource ActionBtn}"
+                            Background="{StaticResource AccentBlue}" Margin="0,0,6,0"
+                            Visibility="{Binding HasActiveSession, Converter={StaticResource BoolVis}}" />
+                    <!-- Export Log button: white bg with blue border and blue text -->
+                    <Button Content="Export Log" Command="{Binding ExportLogCommand}" Style="{StaticResource SecondaryBtn}"
+                            Background="#ffffff" Foreground="{StaticResource AccentBlue}" Margin="0,0,6,0"
+                            Visibility="{Binding HasActiveSession, Converter={StaticResource BoolVis}}" />
+                    <!-- "..." more options button: blue border and text to contrast against light gradient -->
+                    <Button Command="{Binding NewSessionCommand}"
+                            Visibility="{Binding HasActiveSession, Converter={StaticResource BoolVis}}"
+                            Cursor="Hand">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="#ffffff" BorderBrush="{StaticResource AccentBlue}"
+                                        BorderThickness="1" CornerRadius="4" Padding="8,4">
+                                    <TextBlock Text="···" FontWeight="Bold" FontSize="14"
+                                               Foreground="{StaticResource AccentBlue}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════ MAIN CONTENT ═══════════ -->
+
+        <!-- ═══════════ SETUP PANEL ═══════════
+             Shown when NO session is active. Contains the form to start a new investigation.
+             Wrapped in a Fluent-style card (white bg, 1px border, CornerRadius 10, Padding 24). -->
+        <Grid Grid.Row="1" Visibility="{Binding ShowSetupPanel, Converter={StaticResource BoolVis}}">
+            <!-- Custom app logo in top-right corner, only visible on setup page -->
+            <Image Source="/Assets/justlogo.png" Width="80" Height="80"
+                   HorizontalAlignment="Right" VerticalAlignment="Top"
+                   Margin="0,16,24,0" Opacity="0.85" />
+        <Border Padding="30">
+            <!-- Fluent Card wrapper -->
+            <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1"
+                    CornerRadius="10" Padding="24" VerticalAlignment="Center" HorizontalAlignment="Center"
+                    Width="620">
+                <StackPanel>
+
+                    <!-- H1 page headline -->
+                    <TextBlock
+                        Text="Start a New Investigation"
+                        FontSize="22"
+                        FontWeight="SemiBold"
+                        Foreground="{StaticResource AccentBlue}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,18"/>
+
+                    <!-- "Node Name" label -->
+                    <TextBlock Text="Node Name"
+                               Style="{StaticResource LabelText}" />
+
+                    <Grid Margin="0,0,0,16">
+                        <TextBox x:Name="NodeNameBox"
+                                 Style="{StaticResource DarkTextBox}"
+                                 Text="{Binding NodeName, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <!-- Watermark -->
+                        <TextBlock Text="Enter node name"
+                                   Foreground="{StaticResource TextHint}"
+                                   Margin="12,0,0,0"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Text, ElementName=NodeNameBox}"
+                                                     Value="">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- "Node Generation" label -->
+                    <TextBlock Text="Node Generation" Style="{StaticResource LabelText}" />
+                    <!-- Node generation dropdown (Gen6, Gen8, etc.) -->
+                    <ComboBox ItemsSource="{Binding Nodes}" SelectedItem="{Binding SelectedNode}" Style="{StaticResource DarkCombo}"
+                              Text="Select Generation" IsEditable="False" Margin="0,0,0,16">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource NodeDisp}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- "Symptom" label -->
+                    <TextBlock Text="Symptom" Style="{StaticResource LabelText}" />
+                    <!-- Symptom dropdown -->
+                    <ComboBox ItemsSource="{Binding FilteredSymptoms}" SelectedItem="{Binding SelectedSymptom}" Style="{StaticResource DarkCombo}"
+                              Text="Select Symptom" IsEditable="False" Margin="0,0,0,20">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Converter={StaticResource SymptomDisp}}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <!-- Start Session button: PrimaryButton style (height 44, corner radius 8, bold) -->
+                    <Button Content="Start Session" Command="{Binding StartSessionCommand}" Style="{StaticResource PrimaryButton}" HorizontalAlignment="Stretch" />
+
+                    <!-- Recent Sessions header with horizontal separator lines -->
+                    <Grid Margin="0,24,0,10" Visibility="{Binding RecentSessions.Count, Converter={StaticResource BoolVis}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Separator Grid.Column="0" VerticalAlignment="Center" Background="{StaticResource BorderBrush}" />
+                        <!-- Recent Sessions label: 12px SemiBold, TextSecondary -->
+                        <TextBlock Grid.Column="1" Text="Recent Sessions" Style="{StaticResource LabelText}" Margin="12,0" />
+                        <Separator Grid.Column="2" VerticalAlignment="Center" Background="{StaticResource BorderBrush}" />
+                    </Grid>
+
+                    <!-- Recent Sessions in a 3-column chip grid -->
+                    <ItemsControl ItemsSource="{Binding RecentSessions}" Margin="0,0,0,0"
+                                  Visibility="{Binding RecentSessions.Count, Converter={StaticResource BoolVis}}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid x:Name="ChipHost" Margin="3,3">
+                                    <Button Content="{Binding}"
+                                            Command="{Binding DataContext.LoadRecentSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}" Style="{StaticResource ChipButton}"
+                                            HorizontalAlignment="Stretch" />
+                                    <!-- Small × delete button, top-right, hidden until hover -->
+                                    <Button x:Name="DeleteBtn"
+                                            Command="{Binding DataContext.DeleteRecentSessionCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}"
+                                            HorizontalAlignment="Right" VerticalAlignment="Top"
+                                            Margin="0,-4,-4,0" Visibility="Collapsed" Cursor="Hand"
+                                            ToolTip="Remove session">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{StaticResource AccentRed}" CornerRadius="7"
+                                                        Width="14" Height="14">
+                                                    <TextBlock Text="×" Foreground="#ffffff" FontSize="10"
+                                                               FontWeight="Bold" HorizontalAlignment="Center"
+                                                               VerticalAlignment="Center" Margin="0,-1,0,0" />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                    <Grid.Triggers>
+                                        <EventTrigger RoutedEvent="Mouse.MouseEnter">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DeleteBtn"
+                                                                                   Storyboard.TargetProperty="Visibility">
+                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Visible}" />
+                                                    </ObjectAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                        <EventTrigger RoutedEvent="Mouse.MouseLeave">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="DeleteBtn"
+                                                                                   Storyboard.TargetProperty="Visibility">
+                                                        <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="{x:Static Visibility.Collapsed}" />
+                                                    </ObjectAnimationUsingKeyFrames>
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Grid.Triggers>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+        </Border>
+        </Grid>
+
+        <!-- ═══════════ SESSION PANEL ═══════════
+             Shown when a session IS active. Two-column layout:
+             LEFT column: Checks card (top) + Evidence card (bottom) with a splitter between them
+             RIGHT column: Suspect Components, Runbook, Record Action, Journal cards stacked vertically -->
+        <Grid Grid.Row="1" Visibility="{Binding HasActiveSession, Converter={StaticResource BoolVis}}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="300" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="360" MinWidth="280" />
+            </Grid.ColumnDefinitions>
+
+            <!-- LEFT: Checks + Evidence -->
+            <Grid Grid.Column="0" Margin="10,10,5,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Checks card: list of diagnostic checks with checkboxes and notes.
+                     Card bg → CardBg (white). Each check row bg → #f5f7fa (very light gray). -->
+                <Border Grid.Row="0" Background="{StaticResource CardBg}" CornerRadius="6" Padding="12"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="CHECKS" />
+                        </TextBlock>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Checks}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                        <!-- Individual check row: light gray row bg #f5f7fa -->
+                                        <Border Margin="0,2" Padding="6,4" Background="#f5f7fa" CornerRadius="3"> <!-- Check item row background -->
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+                                                <!-- Checkbox + description text → TextPrimary -->
+                                                <CheckBox Grid.Row="0" IsChecked="{Binding Done}" Style="{StaticResource DarkCheck}">
+                                                    <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimary}" FontSize="12" />
+                                                </CheckBox>
+                                                <!-- Notes text input under each check → DarkTextBox, italic -->
+                                                <TextBox Grid.Row="1" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                                         Style="{StaticResource DarkTextBox}" Margin="22,3,0,0"
+                                                         FontSize="11" FontStyle="Italic" />
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Row="1" Height="6" HorizontalAlignment="Stretch" Background="Transparent" />
+
+                <!-- Evidence card: list of evidence to collect with checkboxes and notes.
+                     Card bg → CardBg (white). Each evidence row bg → #f5f7fa. Locked evidence bg → #eaeaea at 60% opacity. -->
+                <Border Grid.Row="2" Background="{StaticResource CardBg}" CornerRadius="6" Padding="12"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="EVIDENCE TO COLLECT" />
+                        </TextBlock>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <ItemsControl ItemsSource="{Binding Evidence}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <!-- Individual evidence row: light gray row bg #f5f7fa -->
+                                            <Border Margin="0,2" Padding="6,4" Background="#f5f7fa" CornerRadius="3"> <!-- Evidence item row background -->
+                                                <Grid>
+                                                    <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto" />
+                                                        <RowDefinition Height="Auto" />
+                                                    </Grid.RowDefinitions>
+                                                    <!-- Checkbox + description text → TextPrimary -->
+                                                    <CheckBox Grid.Row="0" IsChecked="{Binding Collected}" Style="{StaticResource DarkCheck}">
+                                                        <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimary}" FontSize="12" />
+                                                    </CheckBox>
+                                                    <TextBox Grid.Row="1" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                                                             Style="{StaticResource DarkTextBox}" Margin="22,3,0,0"
+                                                             FontSize="11" FontStyle="Italic" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+
+                                <!-- Locked evidence: greyed-out items not yet available (requires higher stage).
+                                     Row bg → #eaeaea (lighter gray), 60% opacity, text → TextSecondary -->
+                                <ItemsControl ItemsSource="{Binding LockedEvidence}" Margin="0,8,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,2" Padding="6,4" Background="#eaeaea" CornerRadius="3" Opacity="0.6"> <!-- Locked item bg (gray + faded) -->
+                                                <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondary}" FontSize="11">
+                                                    <Run Text="[locked] " /><Run Text="{Binding Description, Mode=OneWay}" />
+                                                    <Run Text=" (stage " /><Run Text="{Binding MinStage, Mode=OneWay}" /><Run Text="+)" />
+                                                </TextBlock>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent" />
+
+            <!-- RIGHT: Runbook, Components, Actions, Journal -->
+            <Grid Grid.Column="2" Margin="5,10,10,10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Suspect Components card: lists flagged hardware/software components.
+                     Card bg → CardBg (white). Component names → AccentOrange.
+                     Only visible when there are components to show. -->
+                <Border Grid.Row="0" Background="{StaticResource CardBg}" CornerRadius="6" Padding="10" Margin="0,0,0,8"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        Visibility="{Binding Components.Count, Converter={StaticResource BoolVis}}">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="SUSPECT COMPONENTS" />
+                        </TextBlock>
+                        <ItemsControl ItemsSource="{Binding Components}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Each component name in orange -->
+                                    <TextBlock Text="{Binding}" Foreground="{StaticResource AccentOrange}" FontSize="11" Margin="4,1" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Border>
+
+                <!-- Runbook card: step-by-step procedure instructions, scrollable, max 180px tall.
+                     Card bg → CardBg (white). Step text → TextPrimary. -->
+                <Border Grid.Row="1" Background="{StaticResource CardBg}" CornerRadius="6" Padding="10" Margin="0,0,0,8" MaxHeight="180"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="RUNBOOK" />
+                        </TextBlock>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding RunbookSteps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Each runbook step text → TextPrimary -->
+                                        <TextBlock Text="{Binding}" Foreground="{StaticResource TextPrimary}" FontSize="11"
+                                                   TextWrapping="Wrap" Margin="4,1" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+
+                <!-- Record Action card: dropdown to pick an action + orange "Record Action" button.
+                     Card bg → CardBg (white). Dropdown → DarkCombo style. Button → ActionBtn with AccentOrange override. -->
+                <Border Grid.Row="2" Background="{StaticResource CardBg}" CornerRadius="6" Padding="10" Margin="0,0,0,8"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="RECORD ACTION" />
+                        </TextBlock>
+                        <StackPanel>
+                            <!-- Action picker dropdown → DarkCombo style -->
+                            <ComboBox ItemsSource="{Binding AvailableActions}" SelectedItem="{Binding SelectedAction}"
+                                      Style="{StaticResource DarkCombo}" Margin="0,0,0,6">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Converter={StaticResource ActionDisp}}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <!-- Record Action button: orange bg (overrides default blue ActionBtn) -->
+                            <Button Content="Record Action" Command="{Binding RecordActionCommand}" Style="{StaticResource ActionBtn}"
+                                    Background="{StaticResource AccentOrange}" HorizontalAlignment="Stretch" />
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
+
+                <!-- Journal card: scrollable log of journal entries + input row at the bottom.
+                     Card bg → CardBg (white). Entry text → TextPrimary. Input → DarkTextBox.
+                     "Add" button → ActionBtn with AccentGreen override (green). -->
+                <Border Grid.Row="3" Background="{StaticResource CardBg}" CornerRadius="6" Padding="10"
+                        BorderBrush="{StaticResource BorderBrush}" BorderThickness="1">
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Style="{StaticResource SectionHeader}">
+                            <Run Text="JOURNAL" />
+                        </TextBlock>
+                        <!-- Journal input row (text box + Add button) pinned to bottom -->
+                        <Grid DockPanel.Dock="Bottom" Margin="0,6,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <!-- Journal text input → DarkTextBox style -->
+                            <TextBox Grid.Column="0" Text="{Binding JournalText, UpdateSourceTrigger=PropertyChanged}"
+                                     Style="{StaticResource DarkTextBox}" Margin="0,0,6,0" />
+                            <!-- Add journal entry button: green bg (overrides default blue ActionBtn) -->
+                            <Button Grid.Column="1" Content="Add" Command="{Binding AddJournalEntryCommand}"
+                                    Style="{StaticResource ActionBtn}" Background="{StaticResource AccentGreen}" />
+                        </Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Journal}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <!-- Each journal entry text → TextPrimary -->
+                                        <TextBlock Text="{Binding Display}" Foreground="{StaticResource TextPrimary}"
+                                                   FontSize="11" TextWrapping="Wrap" Margin="2,2" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </DockPanel>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ═══════════ STATUS BAR ═══════════
+             Bottom strip showing status messages.
+             Background → StatusBarBg (light gray). Top border → BorderBrush.
+             Status text → AccentBlue (blue). Microsoft logo on the right. -->
+        <Border Grid.Row="2" Background="{StaticResource StatusBarBg}" Padding="12,8" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <!-- Status message text → blue -->
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" Foreground="{StaticResource AccentBlue}" FontSize="11" VerticalAlignment="Center" />
+                <!-- Microsoft logo (colored squares + text) -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Grid Width="16" Height="16" Margin="0,0,6,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition />
+                            <ColumnDefinition />
+                        </Grid.ColumnDefinitions>
+                        <Rectangle Grid.Row="0" Grid.Column="0" Fill="#f25022" Margin="0,0,1,1" />
+                        <Rectangle Grid.Row="0" Grid.Column="1" Fill="#7fba00" Margin="1,0,0,1" />
+                        <Rectangle Grid.Row="1" Grid.Column="0" Fill="#00a4ef" Margin="0,1,1,0" />
+                        <Rectangle Grid.Row="1" Grid.Column="1" Fill="#ffb900" Margin="1,1,0,0" />
+                    </Grid>
+                    <TextBlock Text="Microsoft" FontSize="13" FontWeight="SemiBold" Foreground="#5f6368" VerticalAlignment="Center" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
